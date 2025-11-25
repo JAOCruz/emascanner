@@ -1,0 +1,574 @@
+/* Multi-Timeframe Dashboard Styles */
+
+.timeframe-legend {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: rgba(0, 255, 249, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  
+  .legend-title {
+    font-weight: 700;
+    color: var(--neon-cyan);
+    margin-right: 0.5rem;
+  }
+  
+  .legend-item {
+    padding: 0.25rem 0.5rem;
+    background: var(--bg-darker);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-family: 'Orbitron', sans-serif;
+    color: var(--text-secondary);
+  }
+  
+  /* Coins Table */
+  .coins-table {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .table-header, .table-row {
+    display: grid;
+    grid-template-columns: 60px 200px 100px 120px 80px 80px 1fr 100px;
+    gap: 1rem;
+    padding: 1rem;
+    align-items: center;
+  }
+  
+  .table-header {
+    background: var(--bg-darker);
+    border-bottom: 2px solid var(--neon-cyan);
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--neon-cyan);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .table-row {
+    border-bottom: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+  }
+  
+  .table-row:hover {
+    background: rgba(0, 255, 249, 0.05);
+    border-left: 3px solid var(--neon-cyan);
+  }
+  
+  .td.rank {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--text-dim);
+    font-weight: 700;
+  }
+  
+  .td.name {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .coin-name-full {
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+  
+  .coin-symbol {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+  
+  .td.trend {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+  }
+  
+  .td.trend.bullish {
+    color: var(--neon-green);
+  }
+  
+  .td.trend.bearish {
+    color: var(--neon-pink);
+  }
+  
+  .align-bar {
+    width: 80px;
+    height: 8px;
+    background: var(--bg-darker);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+  }
+  
+  .align-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+    transition: width 0.5s ease;
+  }
+  
+  /* Timeframe Mini Grid */
+  .tf-mini-grid {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .tf-mini {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.4rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    min-width: 50px;
+    transition: all 0.2s ease;
+  }
+  
+  .tf-mini:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  }
+  
+  .tf-mini-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-bottom: 0.2rem;
+  }
+  
+  .tf-mini-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+  
+  .tf-mini.very-bullish {
+    background: rgba(57, 255, 20, 0.15);
+    border-color: var(--neon-green);
+    color: var(--neon-green);
+  }
+  
+  .tf-mini.bullish {
+    background: rgba(57, 255, 20, 0.1);
+    border-color: #70ff50;
+    color: #70ff50;
+  }
+  
+  .tf-mini.slightly-bullish {
+    background: rgba(0, 255, 249, 0.1);
+    border-color: var(--neon-cyan);
+    color: var(--neon-cyan);
+  }
+  
+  .tf-mini.neutral {
+    background: rgba(160, 160, 181, 0.1);
+    border-color: var(--text-secondary);
+    color: var(--text-secondary);
+  }
+  
+  .tf-mini.slightly-bearish {
+    background: rgba(255, 149, 0, 0.1);
+    border-color: var(--neon-orange);
+    color: var(--neon-orange);
+  }
+  
+  .tf-mini.bearish {
+    background: rgba(255, 0, 110, 0.1);
+    border-color: var(--neon-pink);
+    color: var(--neon-pink);
+  }
+  
+  .tf-mini.na {
+    background: transparent;
+    border-color: var(--border-color);
+    color: var(--text-dim);
+  }
+  
+  .btn-details {
+    font-family: 'Orbitron', sans-serif;
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: 1px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  
+  .btn-details:hover {
+    background: var(--neon-cyan);
+    color: var(--bg-darker);
+    box-shadow: 0 0 15px rgba(0, 255, 249, 0.5);
+  }
+  
+  /* Coin Detail Panel */
+  .coin-detail-panel {
+    background: var(--bg-panel);
+    border: 2px solid var(--neon-cyan);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 0 30px rgba(0, 255, 249, 0.2);
+    animation: slideIn 0.3s ease;
+  }
+  
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--neon-cyan);
+  }
+  
+  .detail-header h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8rem;
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .close-btn {
+    font-size: 1.5rem;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+  }
+  
+  .close-btn:hover {
+    background: var(--neon-pink);
+    color: var(--bg-darker);
+    transform: rotate(90deg);
+  }
+  
+  .detail-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .summary-card {
+    background: var(--bg-darker);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .summary-label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+  }
+  
+  .summary-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--neon-cyan);
+  }
+  
+  .summary-value.bullish {
+    color: var(--neon-green);
+  }
+  
+  .summary-value.bearish {
+    color: var(--neon-pink);
+  }
+  
+  /* Timeframe Grid in Detail View */
+  .timeframe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .timeframe-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .timeframe-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--border-color);
+    transition: all 0.3s ease;
+  }
+  
+  .timeframe-card.very-bullish::before {
+    background: var(--neon-green);
+    box-shadow: 0 0 10px var(--neon-green);
+  }
+  
+  .timeframe-card.bullish::before {
+    background: #70ff50;
+  }
+  
+  .timeframe-card.slightly-bullish::before {
+    background: var(--neon-cyan);
+  }
+  
+  .timeframe-card.neutral::before {
+    background: var(--text-secondary);
+  }
+  
+  .timeframe-card.slightly-bearish::before {
+    background: var(--neon-orange);
+  }
+  
+  .timeframe-card.bearish::before,
+  .timeframe-card.very-bearish::before {
+    background: var(--neon-pink);
+    box-shadow: 0 0 10px var(--neon-pink);
+  }
+  
+  .timeframe-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  }
+  
+  .timeframe-card.unavailable {
+    opacity: 0.4;
+  }
+  
+  .tf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .tf-name {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+  }
+  
+  .tf-icon {
+    font-size: 1.2rem;
+  }
+  
+  .tf-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .tf-pct {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 900;
+  }
+  
+  .timeframe-card.very-bullish .tf-pct,
+  .timeframe-card.bullish .tf-pct {
+    color: var(--neon-green);
+  }
+  
+  .timeframe-card.slightly-bullish .tf-pct {
+    color: var(--neon-cyan);
+  }
+  
+  .timeframe-card.neutral .tf-pct {
+    color: var(--text-secondary);
+  }
+  
+  .timeframe-card.slightly-bearish .tf-pct {
+    color: var(--neon-orange);
+  }
+  
+  .timeframe-card.bearish .tf-pct,
+  .timeframe-card.very-bearish .tf-pct {
+    color: var(--neon-pink);
+  }
+  
+  .tf-trend {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 700;
+  }
+  
+  .tf-position {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .tf-na {
+    font-size: 1.2rem;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 2rem 0;
+  }
+  
+  /* Timeframe Heatmap */
+  .timeframe-heatmap {
+    background: var(--bg-darker);
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+  }
+  
+  .timeframe-heatmap h3 {
+    font-family: 'Orbitron', sans-serif;
+    margin-bottom: 1.5rem;
+    color: var(--neon-cyan);
+  }
+  
+  .heatmap-row {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    height: 150px;
+    padding: 1rem 0;
+    border-top: 2px solid var(--border-color);
+  }
+  
+  .heatmap-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .heatmap-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+  
+  .heatmap-bar {
+    width: 40px;
+    border-radius: 4px 4px 0 0;
+    transition: all 0.5s ease;
+    position: relative;
+  }
+  
+  .heatmap-bar.very-bullish {
+    background: linear-gradient(to top, var(--neon-green), rgba(57, 255, 20, 0.5));
+  }
+  
+  .heatmap-bar.bullish {
+    background: linear-gradient(to top, #70ff50, rgba(112, 255, 80, 0.5));
+  }
+  
+  .heatmap-bar.slightly-bullish {
+    background: linear-gradient(to top, var(--neon-cyan), rgba(0, 255, 249, 0.5));
+  }
+  
+  .heatmap-bar.neutral {
+    background: linear-gradient(to top, var(--text-secondary), rgba(160, 160, 181, 0.5));
+  }
+  
+  .heatmap-bar.slightly-bearish {
+    background: linear-gradient(to top, var(--neon-orange), rgba(255, 149, 0, 0.5));
+  }
+  
+  .heatmap-bar.bearish,
+  .heatmap-bar.very-bearish {
+    background: linear-gradient(to top, var(--neon-pink), rgba(255, 0, 110, 0.5));
+  }
+  
+  .heatmap-bar.unavailable {
+    background: var(--bg-card);
+  }
+  
+  .heatmap-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  
+  /* Responsive */
+  @media (max-width: 1200px) {
+    .table-header, .table-row {
+      grid-template-columns: 50px 150px 90px 100px 70px 70px 1fr 90px;
+      gap: 0.75rem;
+      font-size: 0.85rem;
+    }
+    
+    .timeframe-grid {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .table-header, .table-row {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+    
+    .th, .td {
+      padding: 0.5rem 0;
+    }
+    
+    .timeframe-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .heatmap-row {
+      height: 120px;
+    }
+    
+    .heatmap-bar {
+      width: 30px;
+    }
+  }
