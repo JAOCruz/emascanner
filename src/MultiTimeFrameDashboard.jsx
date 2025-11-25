@@ -1,54 +1,80 @@
 import { useState, useEffect } from 'react'
 import './MultiTimeframe.css'
+import App from './App'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001'
 
 function MultiTimeframeDashboard() {
-  const [results, setResults] = useState(null)
+  const [allCoins, setAllCoins] = useState([])
+  const [selectedTimeframe, setSelectedTimeframe] = useState('1w')
   const [loading, setLoading] = useState(false)
-  const [selectedCoin, setSelectedCoin] = useState(null)
-  const [topN, setTopN] = useState(10)
+  const [error, setError] = useState(null)
+  const [showMainDashboard, setShowMainDashboard] = useState(false)
 
-  const timeframes = ['15m', '30m', '1h', '4h', '12h', '1d', '1w']
+  const timeframes = [
+    { value: '15m', label: '15M' },
+    { value: '1h', label: '1H' },
+    { value: '4h', label: '4H' },
+    { value: '1d', label: '1D' },
+    { value: '1w', label: '1W' }
+  ]
   
-  const startMultiScan = async () => {
+  // If user wants to go back to main dashboard
+  if (showMainDashboard) {
+    return <App />
+  }
+
+  const loadAllTimeframes = async () => {
     setLoading(true)
+    setError(null)
+    
     try {
-      const response = await fetch(`${API_URL}/api/scan/multi`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ top_n: topN })
-      })
+      console.log('📊 Loading coins for', selectedTimeframe, 'timeframe...')
       
-      if (!response.ok) throw new Error('Scan failed')
+      // Fetch data for the selected timeframe
+      const response = await fetch(`${API_URL}/api/ema-analysis/all?timeframe=${selectedTimeframe}`)
+      if (!response.ok) throw new Error('Failed to fetch data')
       
-      // Poll for completion
-      const checkInterval = setInterval(async () => {
-        const statusRes = await fetch(`${API_URL}/api/status`)
-        const status = await statusRes.json()
-        
-        if (!status.running) {
-          clearInterval(checkInterval)
-          await loadResults()
-          setLoading(false)
-        }
-      }, 2000)
+      const data = await response.json()
       
+      console.log('Raw API response:', data)
+      
+      // The API returns { above_ema50: { coins: [...] }, below_ema50: { coins: [...] } }
+      const allCoinsData = [
+        ...(data.above_ema50?.coins || []),
+        ...(data.below_ema50?.coins || [])
+      ]
+
+      // Remove stablecoins
+      const stablecoins = ['USDC', 'USDT', 'DAI', 'USDS', 'USDE', 'PYUSD', 'FDUSD', 
+                          'BUSD', 'TUSD', 'USDP', 'GUSD', 'USDD', 'FRAX', 'LUSD',
+                          'USDT0', 'SUSDS', 'USD1', 'BSC-USD', 'WBETH']
+      
+      const filteredCoins = allCoinsData.filter(coin => !stablecoins.includes(coin.symbol))
+
+      setAllCoins(filteredCoins)
+      console.log('✅ Loaded', filteredCoins.length, 'coins for', selectedTimeframe)
+
     } catch (error) {
-      console.error('Scan failed:', error)
-      alert('Failed to start scan. Make sure API server is running.')
+      console.error('❌ Load failed:', error)
+      setError(error.message)
+    } finally {
       setLoading(false)
     }
   }
 
-  const loadResults = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/results/multi/latest`)
-      const data = await response.json()
-      setResults(data)
-    } catch (error) {
-      console.error('Failed to load results:', error)
-    }
+  // Reload data when timeframe changes
+  useEffect(() => {
+    loadAllTimeframes()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTimeframe])
+
+  // Sort coins by distance from EMA for selected timeframe
+  const getSortedCoins = () => {
+    return [...allCoins].sort((a, b) => {
+      // Sort by pct_from_ema50 - most above EMA first
+      return (b.pct_from_ema50 || 0) - (a.pct_from_ema50 || 0)
+    })
   }
 
   const getTrendColor = (pct) => {
@@ -60,106 +86,14 @@ function MultiTimeframeDashboard() {
     return 'bearish'
   }
 
-  const getTrendIcon = (pct) => {
-    if (pct > 5) return '▲▲'
-    if (pct > 0) return '▲'
-    if (pct > -5) return '━'
-    if (pct > -10) return '▼'
-    return '▼▼'
+  const formatPrice = (price) => {
+    if (!price) return 'N/A'
+    if (price >= 1000) return `$${price.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
+    if (price >= 1) return `$${price.toFixed(2)}`
+    return `$${price.toFixed(6)}`
   }
 
-  const CoinDetailView = ({ coin }) => {
-    const tfData = coin.timeframe_data || {}
-    
-    return (
-      <div className="coin-detail-panel">
-        <div className="detail-header">
-          <h2>#{coin.rank} {coin.name} ({coin.symbol})</h2>
-          <button onClick={() => setSelectedCoin(null)} className="close-btn">✕</button>
-        </div>
-        
-        <div className="detail-summary">
-          <div className="summary-card">
-            <span className="summary-label">Primary Trend</span>
-            <span className={`summary-value ${coin.primary_trend.toLowerCase()}`}>
-              {coin.primary_trend}
-            </span>
-          </div>
-          <div className="summary-card">
-            <span className="summary-label">Alignment</span>
-            <span className="summary-value">{coin.alignment_score.toFixed(1)}%</span>
-          </div>
-          <div className="summary-card">
-            <span className="summary-label">Bullish TF</span>
-            <span className="summary-value bullish">{coin.bullish_timeframes}/{coin.total_timeframes}</span>
-          </div>
-          <div className="summary-card">
-            <span className="summary-label">Bearish TF</span>
-            <span className="summary-value bearish">{coin.bearish_timeframes}/{coin.total_timeframes}</span>
-          </div>
-        </div>
-
-        <div className="timeframe-grid">
-          {timeframes.map(tf => {
-            const data = tfData[tf]
-            if (!data) {
-              return (
-                <div key={tf} className="timeframe-card unavailable">
-                  <div className="tf-header">
-                    <span className="tf-name">{tf.toUpperCase()}</span>
-                  </div>
-                  <div className="tf-body">
-                    <span className="tf-na">No Data</span>
-                  </div>
-                </div>
-              )
-            }
-            
-            return (
-              <div key={tf} className={`timeframe-card ${getTrendColor(data.pct)}`}>
-                <div className="tf-header">
-                  <span className="tf-name">{tf.toUpperCase()}</span>
-                  <span className="tf-icon">{getTrendIcon(data.pct)}</span>
-                </div>
-                <div className="tf-body">
-                  <div className="tf-pct">{data.pct > 0 ? '+' : ''}{data.pct.toFixed(2)}%</div>
-                  <div className="tf-trend">{data.trend}</div>
-                  <div className="tf-position">{data.above ? 'Above EMA' : 'Below EMA'}</div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        <div className="timeframe-heatmap">
-          <h3>Timeframe Heatmap</h3>
-          <div className="heatmap-row">
-            {timeframes.map(tf => {
-              const data = tfData[tf]
-              const pct = data ? data.pct : null
-              
-              return (
-                <div key={tf} className="heatmap-cell">
-                  <div className="heatmap-label">{tf}</div>
-                  <div 
-                    className={`heatmap-bar ${pct !== null ? getTrendColor(pct) : 'unavailable'}`}
-                    style={{ 
-                      height: pct !== null ? `${Math.abs(pct) * 2}px` : '20px',
-                      maxHeight: '100px'
-                    }}
-                    title={pct !== null ? `${pct.toFixed(2)}%` : 'N/A'}
-                  ></div>
-                  {pct !== null && (
-                    <div className="heatmap-value">{pct > 0 ? '+' : ''}{pct.toFixed(1)}%</div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-    )
-  }
+  const sortedCoins = getSortedCoins()
 
   return (
     <div className="multi-timeframe-app">
@@ -169,142 +103,124 @@ function MultiTimeframeDashboard() {
       <header className="header">
         <div className="header-content">
           <div className="logo">
-            <span className="logo-icon">◈</span>
+            <span className="logo-icon">◆</span>
             <span className="logo-text">MULTI-TIMEFRAME SCANNER</span>
+            <button 
+              className="view-toggle"
+              onClick={() => setShowMainDashboard(true)}
+              title="Back to main dashboard"
+            >
+              ← 1 TF
+            </button>
           </div>
-          {results && (
-            <div className="header-stats">
+          <div className="header-stats">
+            {allCoins.length > 0 && (
               <div className="header-stat">
                 <span className="header-stat-label">COINS</span>
-                <span className="header-stat-value">{results.analysis?.length || 0}</span>
+                <span className="header-stat-value">{allCoins.length}</span>
               </div>
-            </div>
-          )}
+            )}
+            {loading && (
+              <div className="header-stat">
+                <span className="header-stat-label">STATUS</span>
+                <span className="header-stat-value loading">LOADING...</span>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
       <div className="container">
         <div className="control-panel">
-          <h2 className="panel-title">MULTI-TIMEFRAME CONTROL</h2>
+          <h2 className="panel-title">TIMEFRAME SELECTOR</h2>
           
           <div className="controls">
-            <div className="control-group">
-              <label className="control-label">
-                <span>TOP COINS</span>
-                <input
-                  type="number"
-                  value={topN}
-                  onChange={(e) => setTopN(Math.max(5, Math.min(50, parseInt(e.target.value) || 10)))}
-                  min="5"
-                  max="50"
-                  className="control-input"
+            <div className="timeframe-buttons">
+              {timeframes.map(tf => (
+                <button
+                  key={tf.value}
+                  onClick={() => setSelectedTimeframe(tf.value)}
+                  className={`tf-button ${selectedTimeframe === tf.value ? 'active' : ''}`}
                   disabled={loading}
-                />
-              </label>
+                >
+                  {tf.label}
+                </button>
+              ))}
             </div>
 
             <div className="control-buttons">
               <button
-                onClick={startMultiScan}
+                onClick={loadAllTimeframes}
                 disabled={loading}
                 className="btn btn-primary"
               >
-                {loading ? 'SCANNING...' : 'RUN MULTI-TF SCAN'}
-              </button>
-              
-              <button
-                onClick={loadResults}
-                disabled={loading}
-                className="btn btn-outline"
-              >
-                LOAD LATEST
+                {loading ? '⟳ LOADING...' : '↻ REFRESH DATA'}
               </button>
             </div>
           </div>
 
-          <div className="timeframe-legend">
-            <span className="legend-title">Timeframes:</span>
-            {timeframes.map(tf => (
-              <span key={tf} className="legend-item">{tf.toUpperCase()}</span>
-            ))}
+          {error && (
+            <div className="error-notice">
+              <p>❌ {error}</p>
+            </div>
+          )}
+
+          <div className="timeframe-info">
+            <p>Currently viewing: <strong>{timeframes.find(tf => tf.value === selectedTimeframe)?.label}</strong> timeframe</p>
+            <p className="info-text">Coins are sorted by distance from EMA50 - positive values are above EMA (bullish)</p>
           </div>
         </div>
 
-        {selectedCoin && <CoinDetailView coin={selectedCoin} />}
-
-        {results && !selectedCoin && (
+        {sortedCoins.length > 0 && !loading && (
           <div className="results-section">
-            <h2 className="section-title">TIMEFRAME ALIGNMENT ANALYSIS</h2>
+            <h2 className="section-title">
+              {timeframes.find(tf => tf.value === selectedTimeframe)?.label} TIMEFRAME ANALYSIS
+            </h2>
             <p className="section-desc">
-              Coins sorted by alignment score - higher score means more timeframes agree on the trend
+              Showing {sortedCoins.length} coins ranked by their position relative to EMA50
             </p>
 
-            <div className="coins-table">
-              <div className="table-header">
-                <div className="th rank">Rank</div>
-                <div className="th name">Coin</div>
-                <div className="th trend">Trend</div>
-                <div className="th align">Alignment</div>
-                <div className="th bull">Bull TF</div>
-                <div className="th bear">Bear TF</div>
-                <div className="th timeframes">Timeframes (% from EMA50)</div>
-                <div className="th action">Action</div>
-              </div>
+            <div className="coins-grid-simple">
+              {sortedCoins.map((coin, idx) => (
+                <div key={coin.symbol} className={`coin-card-simple ${getTrendColor(coin.pct_from_ema50)}`}>
+                  <div className="coin-card-header">
+                    <div className="coin-rank-simple">
+                      <div className="position-number">#{idx + 1}</div>
+                      <div className="mcap-rank">MC: {coin.market_cap_rank}</div>
+                    </div>
+                    <div className="coin-info-simple">
+                      <div className="coin-name-simple">{coin.name}</div>
+                      <div className="coin-symbol-simple">{coin.symbol}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="coin-stats-simple">
+                    <div className="stat-row">
+                      <span className="stat-label">Price:</span>
+                      <span className="stat-value">{formatPrice(coin.current_price)}</span>
+                    </div>
+                    <div className="stat-row">
+                      <span className="stat-label">EMA50:</span>
+                      <span className="stat-value">{formatPrice(coin.ema50)}</span>
+                    </div>
+                    <div className="stat-row">
+                      <span className="stat-label">Distance:</span>
+                      <span className={`stat-value ${coin.pct_from_ema50 >= 0 ? 'positive' : 'negative'}`}>
+                        {coin.pct_from_ema50 >= 0 ? '+' : ''}{coin.pct_from_ema50?.toFixed(2)}%
+                      </span>
+                    </div>
+                    {coin.four_h_pct_from_ema !== undefined && (
+                      <div className="stat-row">
+                        <span className="stat-label">4H Distance:</span>
+                        <span className={`stat-value ${coin.four_h_pct_from_ema >= 0 ? 'positive' : 'negative'}`}>
+                          {coin.four_h_pct_from_ema >= 0 ? '+' : ''}{coin.four_h_pct_from_ema?.toFixed(2)}%
+                        </span>
+                      </div>
+                    )}
+                  </div>
 
-              {results.analysis?.map((coin, idx) => (
-                <div key={idx} className="table-row">
-                  <div className="td rank">#{coin.rank}</div>
-                  <div className="td name">
-                    <div className="coin-name-full">{coin.name}</div>
-                    <div className="coin-symbol">{coin.symbol}</div>
-                  </div>
-                  <div className={`td trend ${coin.primary_trend.toLowerCase()}`}>
-                    {coin.primary_trend}
-                  </div>
-                  <div className="td align">
-                    <div className="align-bar">
-                      <div 
-                        className="align-fill"
-                        style={{ width: `${coin.alignment_score}%` }}
-                      ></div>
-                    </div>
-                    <span>{coin.alignment_score.toFixed(0)}%</span>
-                  </div>
-                  <div className="td bull">{coin.bullish_timeframes}</div>
-                  <div className="td bear">{coin.bearish_timeframes}</div>
-                  <div className="td timeframes">
-                    <div className="tf-mini-grid">
-                      {timeframes.map(tf => {
-                        const data = coin.timeframe_data?.[tf]
-                        if (!data) return (
-                          <div key={tf} className="tf-mini na" title={`${tf}: No data`}>
-                            <span className="tf-mini-label">{tf}</span>
-                            <span className="tf-mini-value">-</span>
-                          </div>
-                        )
-                        
-                        return (
-                          <div 
-                            key={tf} 
-                            className={`tf-mini ${getTrendColor(data.pct)}`}
-                            title={`${tf}: ${data.pct.toFixed(2)}%`}
-                          >
-                            <span className="tf-mini-label">{tf}</span>
-                            <span className="tf-mini-value">
-                              {data.pct > 0 ? '+' : ''}{data.pct.toFixed(1)}%
-                            </span>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                  <div className="td action">
-                    <button 
-                      className="btn-details"
-                      onClick={() => setSelectedCoin(coin)}
-                    >
-                      Details
-                    </button>
+                  <div className={`position-badge ${coin.above_ema50 ? 'above' : 'below'}`}>
+                    {coin.above_ema50 ? '▲ ABOVE EMA' : '▼ BELOW EMA'}
                   </div>
                 </div>
               ))}
@@ -312,20 +228,27 @@ function MultiTimeframeDashboard() {
           </div>
         )}
 
-        {!results && !loading && (
+        {!allCoins.length && loading && (
+          <div className="loading-state">
+            <div className="loading-spinner">⟳</div>
+            <h3>LOADING DATA...</h3>
+            <p>Fetching cryptocurrency analysis</p>
+          </div>
+        )}
+
+        {!allCoins.length && !loading && !error && (
           <div className="empty-state">
-            <div className="empty-icon">◈</div>
-            <h3>NO MULTI-TIMEFRAME DATA</h3>
-            <p>Run a multi-timeframe scan to see detailed analysis across 7 timeframes</p>
-            <p className="empty-hint">15m · 30m · 1h · 4h · 12h · 1D · 1W</p>
+            <div className="empty-icon">◆</div>
+            <h3>NO DATA AVAILABLE</h3>
+            <p>Click "Refresh Data" to load cryptocurrency analysis</p>
           </div>
         )}
       </div>
 
       <footer className="footer">
         <p>
-          ⚡ Multi-Timeframe EMA Scanner · 7 Timeframes (15m to 1W) · 
-          <span className="footer-highlight"> Complete Trend Analysis</span>
+          ⚡ Multi-Timeframe EMA Scanner · Switch between 5 timeframes · 
+          <span className="footer-highlight"> Instant Ranking</span>
         </p>
         <p className="footer-warning">
           ⚠ For educational purposes only · Not financial advice · DYOR

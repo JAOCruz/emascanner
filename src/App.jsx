@@ -6,66 +6,100 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001'
 
 function App() {
   const [viewMode, setViewMode] = useState('standard') // 'standard' or 'multi'
-  const [scanStatus, setScanStatus] = useState(null)
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [topN, setTopN] = useState(10)
-  const [useCache, setUseCache] = useState(true)
   const [activeTab, setActiveTab] = useState('longterm')
+  const [dbStats, setDbStats] = useState(null)
+  const [error, setError] = useState(null)
 
-  // Poll scan status
+  // Auto-load on mount
   useEffect(() => {
-    const checkStatus = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/status`)
-        const data = await response.json()
-        setScanStatus(data)
-        
-        // Auto-load results when scan completes
-        if (!data.running && data.progress > 0 && !results) {
-          loadLatestResults()
-        }
-      } catch (error) {
-        console.error('Status check failed:', error)
-      }
-    }
+    loadFromDatabase()
+  }, [])
 
-    checkStatus()
-    const interval = setInterval(checkStatus, 2000)
-    return () => clearInterval(interval)
-  }, [results])
-
-  const startScan = async (isDemo = false) => {
-    setLoading(true)
-    setResults(null)
-    
+  const checkDatabaseStats = async () => {
     try {
-      if (isDemo) {
-        const response = await fetch(`${API_URL}/api/demo`)
-        const data = await response.json()
-        setResults(data)
-      } else {
-        await fetch(`${API_URL}/api/scan`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ top_n: topN, use_cache: useCache })
-        })
-      }
+      const response = await fetch(`${API_URL}/api/database-stats`)
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const data = await response.json()
+      setDbStats(data)
+      return data
     } catch (error) {
-      console.error('Scan failed:', error)
-      alert('Failed to start scan. Make sure the API server is running on port 5001.')
-    } finally {
-      setLoading(false)
+      console.error('Failed to fetch database stats:', error)
+      return null
     }
   }
 
-  const loadLatestResults = async () => {
+  const loadFromDatabase = async () => {
+    setLoading(true)
+    setError(null)
+    
     try {
-      const response = await fetch(`${API_URL}/api/results/latest`)
+      // First check if API is reachable
+      const healthCheck = await fetch(`${API_URL}/health`).catch(() => null)
+      if (!healthCheck || !healthCheck.ok) {
+        throw new Error('API server is not running. Start it with: python3 api_server_with_db.py')
+      }
+
+      // Get database stats
+      const stats = await checkDatabaseStats()
+      
+      // Check if database has data
+      if (stats && stats.coins === 0) {
+        throw new Error('Database is empty. Run: python3 background_worker.py')
+      }
+
+      // Fetch strategic summary
+      const response = await fetch(`${API_URL}/api/strategic-summary`)
+      if (!response.ok) {
+        throw new Error(`API returned ${response.status}: ${response.statusText}`)
+      }
+      
       const data = await response.json()
-      setResults(data)
+      
+      console.log('✅ API Response:', data) // Debug log
+      
+      // Stablecoins to filter out
+      const stablecoins = ['USDC', 'USDT', 'DAI', 'USDS', 'USDE', 'PYUSD', 'FDUSD', 
+                          'BUSD', 'TUSD', 'USDP', 'GUSD', 'USDD', 'FRAX', 'LUSD',
+                          'USDT0', 'SUSDS', 'USD1', 'BSC-USD', 'WBETH']
+      
+      // Filter function to remove stablecoins
+      const filterStablecoins = (coins) => {
+        if (!Array.isArray(coins)) return []
+        return coins.filter(coin => !stablecoins.includes(coin.symbol))
+      }
+      
+      // Transform data to match expected format
+      const transformedData = {
+        scan_date: new Date().toISOString(),
+        summary: {
+          total_scanned: (data.evaluate_long_term?.count || 0) + 
+                        (data.trade_now_short_term?.count || 0) + 
+                        (data.avoid?.count || 0),
+          total_above_weekly: data.evaluate_long_term?.count || 0,
+          total_below_weekly: data.avoid?.count || 0,
+        },
+        strategic_summary: {
+          coins_to_evaluate_long_term: filterStablecoins(data.evaluate_long_term?.coins || []),
+          coins_to_trade_now_short_term: filterStablecoins(data.trade_now_short_term?.coins || []),
+          coins_to_avoid: filterStablecoins(data.avoid?.coins || [])
+        }
+      }
+      
+      console.log('✅ Transformed:', {
+        evaluate: transformedData.strategic_summary.coins_to_evaluate_long_term.length,
+        trade: transformedData.strategic_summary.coins_to_trade_now_short_term.length,
+        avoid: transformedData.strategic_summary.coins_to_avoid.length
+      })
+      
+      setResults(transformedData)
+      
     } catch (error) {
-      console.error('Failed to load results:', error)
+      console.error('❌ Load failed:', error)
+      setError(error.message)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -83,7 +117,7 @@ function App() {
   const CoinCard = ({ coin, showTimeframe = true }) => (
     <div className="coin-card">
       <div className="coin-header">
-        <div className="coin-rank">#{coin.rank}</div>
+        <div className="coin-rank">#{coin.market_cap_rank || coin.rank}</div>
         <div className="coin-info">
           <div className="coin-name">{coin.name}</div>
           <div className="coin-symbol">{coin.symbol}</div>
@@ -101,13 +135,15 @@ function App() {
         <div className="stat">
           <span className="stat-label">Distance</span>
           <span className={`stat-value ${coin.above_ema50 ? 'positive' : 'negative'}`}>
-            {coin.pct_from_ema50 > 0 ? '+' : ''}{coin.pct_from_ema50.toFixed(2)}%
+            {coin.pct_from_ema50 > 0 ? '+' : ''}{coin.pct_from_ema50?.toFixed(2)}%
           </span>
         </div>
-        {showTimeframe && (
+        {coin.four_h_pct_from_ema !== undefined && (
           <div className="stat">
-            <span className="stat-label">Timeframe</span>
-            <span className="stat-value">{coin.timeframe}</span>
+            <span className="stat-label">4H Distance</span>
+            <span className={`stat-value ${coin.four_h_pct_from_ema >= 0 ? 'positive' : 'negative'}`}>
+              {coin.four_h_pct_from_ema >= 0 ? '+' : ''}{coin.four_h_pct_from_ema?.toFixed(2)}%
+            </span>
           </div>
         )}
       </div>
@@ -147,16 +183,22 @@ function App() {
                 <div className="header-stat">
                   <span className="header-stat-label">ABOVE</span>
                   <span className="header-stat-value positive">
-                    {results.summary.total_above_weekly || results.summary.total_above || 0}
+                    {results.summary.total_above_weekly || 0}
                   </span>
                 </div>
                 <div className="header-stat">
                   <span className="header-stat-label">BELOW</span>
                   <span className="header-stat-value negative">
-                    {results.summary.total_below_weekly || results.summary.total_below || 0}
+                    {results.summary.total_below_weekly || 0}
                   </span>
                 </div>
               </>
+            )}
+            {loading && (
+              <div className="header-stat">
+                <span className="header-stat-label">STATUS</span>
+                <span className="header-stat-value loading">LOADING...</span>
+              </div>
             )}
           </div>
         </div>
@@ -167,90 +209,61 @@ function App() {
           <h2 className="panel-title">CONTROL TERMINAL</h2>
           
           <div className="controls">
-            <div className="control-group">
-              <label className="control-label">
-                <span>TOP COINS</span>
-                <input
-                  type="number"
-                  value={topN}
-                  onChange={(e) => setTopN(Math.max(5, Math.min(200, parseInt(e.target.value) || 10)))}
-                  min="5"
-                  max="200"
-                  className="control-input"
-                  disabled={scanStatus?.running}
-                />
-              </label>
-            </div>
-
-            <div className="control-group">
-              <label className="control-checkbox">
-                <input
-                  type="checkbox"
-                  checked={useCache}
-                  onChange={(e) => setUseCache(e.target.checked)}
-                  disabled={scanStatus?.running}
-                />
-                <span>Use Cache (60 min)</span>
-              </label>
-            </div>
+            {dbStats && (
+              <div className="db-status">
+                <div className="db-stat">
+                  <span className="db-label">📊 Coins in DB:</span>
+                  <span className="db-value">{dbStats.coins}</span>
+                </div>
+                <div className="db-stat">
+                  <span className="db-label">📈 EMA Analysis:</span>
+                  <span className="db-value">{dbStats.ema_analysis}</span>
+                </div>
+                {dbStats.latest_scan && (
+                  <div className="db-stat">
+                    <span className="db-label">🕐 Last Scan:</span>
+                    <span className="db-value">
+                      {new Date(dbStats.latest_scan).toLocaleString()}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="control-buttons">
               <button
-                onClick={() => startScan(false)}
-                disabled={scanStatus?.running || loading}
+                onClick={loadFromDatabase}
+                disabled={loading}
                 className="btn btn-primary"
               >
-                {scanStatus?.running ? 'SCANNING...' : 'RUN SCAN'}
-              </button>
-              
-              <button
-                onClick={() => startScan(true)}
-                disabled={scanStatus?.running || loading}
-                className="btn btn-secondary"
-              >
-                DEMO MODE
+                {loading ? '⟳ LOADING...' : '↻ REFRESH DATA'}
               </button>
 
               <button
-                onClick={loadLatestResults}
-                disabled={scanStatus?.running}
+                onClick={checkDatabaseStats}
+                disabled={loading}
                 className="btn btn-outline"
               >
-                LOAD LATEST
+                📊 REFRESH STATS
               </button>
             </div>
           </div>
 
-          {scanStatus && (
-            <div className="status-display">
-              <div className="status-header">
-                <span className="status-indicator" data-status={scanStatus.running ? 'active' : 'idle'}></span>
-                <span className="status-text">{scanStatus.status_message}</span>
-              </div>
-              
-              {scanStatus.running && (
-                <>
-                  <div className="progress-bar">
-                    <div 
-                      className="progress-fill"
-                      style={{ width: `${(scanStatus.progress / scanStatus.total) * 100}%` }}
-                    ></div>
-                  </div>
-                  <div className="progress-text">
-                    {scanStatus.current_coin && (
-                      <span className="current-coin">{scanStatus.current_coin}</span>
-                    )}
-                    <span className="progress-count">
-                      {scanStatus.progress} / {scanStatus.total}
-                    </span>
-                  </div>
-                </>
-              )}
+          {error && (
+            <div className="error-notice">
+              <p>❌ {error}</p>
+            </div>
+          )}
+
+          {!dbStats?.coins && !loading && !error && (
+            <div className="empty-db-notice">
+              <p>⚠️ Database is empty. Run the background worker first:</p>
+              <code>python3 background_worker.py</code>
             </div>
           )}
         </div>
 
-        {results && summary && (
+        {results && summary && !loading && (
           <div className="results-section">
             <div className="tabs">
               <button
@@ -331,11 +344,24 @@ function App() {
           </div>
         )}
 
-        {!results && !scanStatus?.running && (
+        {!results && loading && (
+          <div className="loading-state">
+            <div className="loading-spinner">⟳</div>
+            <h3>LOADING CRYPTOCURRENCY DATA...</h3>
+            <p>Fetching analysis from database</p>
+          </div>
+        )}
+
+        {!results && !loading && !error && (
           <div className="empty-state">
             <div className="empty-icon">◈</div>
-            <h3>NO SCAN DATA</h3>
-            <p>Run a scan or load existing results to view cryptocurrency analysis</p>
+            <h3>NO DATA LOADED</h3>
+            <p>Click "Refresh Data" to reload cryptocurrency analysis</p>
+            {dbStats?.coins > 0 && (
+              <p className="empty-hint">
+                ✅ Database has {dbStats.coins} coins ready to load
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -343,7 +369,7 @@ function App() {
       <footer className="footer">
         <p>
           ⚡ Crypto EMA Scanner Dashboard · Multi-timeframe analysis (Weekly/Daily/4H) · 
-          <span className="footer-highlight"> EMA50 Technical Indicator</span>
+          <span className="footer-highlight"> Instant Database Loading</span>
         </p>
         <p className="footer-warning">
           ⚠ For educational purposes only · Not financial advice · DYOR

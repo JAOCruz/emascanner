@@ -572,3 +572,257 @@
       width: 30px;
     }
   }
+ /* Timeframe Selector Buttons */
+.timeframe-buttons {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.tf-button {
+  font-family: 'Orbitron', sans-serif;
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: 2px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.tf-button:hover {
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 255, 249, 0.2);
+}
+
+.tf-button.active {
+  background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-purple) 100%);
+  border-color: var(--neon-cyan);
+  color: var(--bg-darker);
+  box-shadow: 0 0 20px rgba(0, 255, 249, 0.5);
+}
+
+.tf-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.timeframe-info {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(0, 255, 249, 0.05);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+.timeframe-info p {
+  margin: 0.5rem 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.timeframe-info strong {
+  color: var(--neon-cyan);
+  font-family: 'Orbitron', sans-serif;
+}
+
+.info-text {
+  font-size: 0.85rem !important;
+  color: var(--text-dim) !important;
+}
+
+/* Simplified Coin Grid for Timeframe View */
+.coins-grid-simple {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem 0;
+}
+
+.coin-card-simple {
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.coin-card-simple::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.coin-card-simple.very-bullish::before {
+  background: var(--neon-green);
+  box-shadow: 0 0 10px var(--neon-green);
+}
+
+.coin-card-simple.bullish::before {
+  background: #70ff50;
+}
+
+.coin-card-simple.slightly-bullish::before {
+  background: var(--neon-cyan);
+}
+
+.coin-card-simple.neutral::before {
+  background: var(--text-secondary);
+}
+
+.coin-card-simple.slightly-bearish::before {
+  background: var(--neon-orange);
+}
+
+.coin-card-simple.bearish::before {
+  background: var(--neon-pink);
+  box-shadow: 0 0 10px var(--neon-pink);
+}
+
+.coin-card-simple:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border-color: var(--neon-cyan);
+}
+
+.coin-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.coin-rank-simple {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 65px;
+}
+
+.position-number {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--neon-cyan);
+  line-height: 1;
+}
+
+.mcap-rank {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.coin-info-simple {
+  flex: 1;
+}
+
+.coin-name-simple {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+  color: var(--text-primary);
+}
+
+.coin-symbol-simple {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.coin-stats-simple {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-row .stat-label {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.stat-row .stat-value {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.stat-row .stat-value.positive {
+  color: var(--neon-green);
+}
+
+.stat-row .stat-value.negative {
+  color: var(--neon-pink);
+}
+
+/* Loading state improvements */
+.loading-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--neon-cyan);
+}
+
+.loading-spinner {
+  font-size: 4rem;
+  animation: spin 2s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-state h3 {
+  color: var(--neon-cyan);
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.loading-state p {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .timeframe-buttons {
+    justify-content: center;
+  }
+  
+  .tf-button {
+    flex: 1;
+    min-width: 60px;
+  }
+  
+  .coins-grid-simple {
+    grid-template-columns: 1fr;
+  }
+}
