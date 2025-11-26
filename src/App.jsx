@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import MultiTimeframeDashboard from './MultiTimeFrameDashboard.jsx'
 import CoinDetailModal from './CoinDetailModal'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001'
