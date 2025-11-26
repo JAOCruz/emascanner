@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import MultiTimeframeDashboard from './MultiTimeFrameDashboard.jsx'
+import CoinDetailModal from './CoinDetailModal'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001'
 
-function App() {
-  const [viewMode, setViewMode] = useState('standard') // 'standard' or 'multi'
+function App({ onMultiViewClick }) {
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('longterm')
   const [dbStats, setDbStats] = useState(null)
   const [error, setError] = useState(null)
+  const [selectedCoin, setSelectedCoin] = useState(null)
 
   // Auto-load on mount
   useEffect(() => {
@@ -109,13 +110,8 @@ function App() {
     return `$${price.toFixed(6)}`
   }
 
-  // If multi-timeframe view, render that component instead
-  if (viewMode === 'multi') {
-    return <MultiTimeframeDashboard />
-  }
-
   const CoinCard = ({ coin, showTimeframe = true }) => (
-    <div className="coin-card">
+    <div className="coin-card" onClick={() => setSelectedCoin(coin.symbol)} style={{ cursor: 'pointer' }}>
       <div className="coin-header">
         <div className="coin-rank">#{coin.market_cap_rank || coin.rank}</div>
         <div className="coin-info">
@@ -167,10 +163,10 @@ function App() {
             <span className="logo-text">CRYPTO EMA SCANNER</span>
             <button 
               className="view-toggle"
-              onClick={() => setViewMode(viewMode === 'standard' ? 'multi' : 'standard')}
+              onClick={onMultiViewClick}
               title="Switch to multi-timeframe view"
             >
-              {viewMode === 'standard' ? '7 TF' : '3 TF'}
+              7 TF
             </button>
           </div>
           <div className="header-stats">
@@ -375,6 +371,14 @@ function App() {
           ⚠ For educational purposes only · Not financial advice · DYOR
         </p>
       </footer>
+
+      {/* Coin Detail Modal */}
+      {selectedCoin && (
+        <CoinDetailModal 
+          symbol={selectedCoin} 
+          onClose={() => setSelectedCoin(null)} 
+        />
+      )}
     </div>
   )
 }

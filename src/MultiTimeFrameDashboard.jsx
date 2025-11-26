@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react'
 import './MultiTimeframe.css'
-import App from './App'
+import CoinDetailModal from './CoinDetailModal'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001'
 
-function MultiTimeframeDashboard() {
+function MultiTimeframeDashboard({ onBackClick }) {
   const [allCoins, setAllCoins] = useState([])
   const [selectedTimeframe, setSelectedTimeframe] = useState('1w')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [showMainDashboard, setShowMainDashboard] = useState(false)
+  const [selectedCoin, setSelectedCoin] = useState(null)
 
   const timeframes = [
     { value: '15m', label: '15M' },
@@ -18,11 +18,6 @@ function MultiTimeframeDashboard() {
     { value: '1d', label: '1D' },
     { value: '1w', label: '1W' }
   ]
-  
-  // If user wants to go back to main dashboard
-  if (showMainDashboard) {
-    return <App />
-  }
 
   const loadAllTimeframes = async () => {
     setLoading(true)
@@ -107,7 +102,7 @@ function MultiTimeframeDashboard() {
             <span className="logo-text">MULTI-TIMEFRAME SCANNER</span>
             <button 
               className="view-toggle"
-              onClick={() => setShowMainDashboard(true)}
+              onClick={onBackClick}
               title="Back to main dashboard"
             >
               ← 1 TF
@@ -182,7 +177,12 @@ function MultiTimeframeDashboard() {
 
             <div className="coins-grid-simple">
               {sortedCoins.map((coin, idx) => (
-                <div key={coin.symbol} className={`coin-card-simple ${getTrendColor(coin.pct_from_ema50)}`}>
+                <div 
+                  key={coin.symbol} 
+                  className={`coin-card-simple ${getTrendColor(coin.pct_from_ema50)}`}
+                  onClick={() => setSelectedCoin(coin.symbol)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="coin-card-header">
                     <div className="coin-rank-simple">
                       <div className="position-number">#{idx + 1}</div>
@@ -254,6 +254,14 @@ function MultiTimeframeDashboard() {
           ⚠ For educational purposes only · Not financial advice · DYOR
         </p>
       </footer>
+
+      {/* Coin Detail Modal */}
+      {selectedCoin && (
+        <CoinDetailModal 
+          symbol={selectedCoin} 
+          onClose={() => setSelectedCoin(null)} 
+        />
+      )}
     </div>
   )
 }
