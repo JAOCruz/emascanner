@@ -11,6 +11,7 @@ function App({ onMultiViewClick }) {
   const [dbStats, setDbStats] = useState(null)
   const [error, setError] = useState(null)
   const [selectedCoin, setSelectedCoin] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Auto-load on mount
   useEffect(() => {
@@ -107,6 +108,15 @@ function App({ onMultiViewClick }) {
     if (price >= 1000) return `$${price.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
     if (price >= 1) return `$${price.toFixed(2)}`
     return `$${price.toFixed(6)}`
+  }
+
+  const filterCoins = (coins) => {
+    if (!searchQuery.trim()) return coins
+    const query = searchQuery.toLowerCase()
+    return coins.filter(coin => 
+      coin.symbol.toLowerCase().includes(query) || 
+      coin.name.toLowerCase().includes(query)
+    )
   }
 
   const CoinCard = ({ coin, showTimeframe = true }) => (
@@ -260,6 +270,25 @@ function App({ onMultiViewClick }) {
 
         {results && summary && !loading && (
           <div className="results-section">
+            <div className="search-container">
+              <input
+                type="text"
+                placeholder="🔍 Search coins... (e.g., BTC, Bitcoin)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input"
+              />
+              {searchQuery && (
+                <button 
+                  className="search-clear"
+                  onClick={() => setSearchQuery('')}
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
             <div className="tabs">
               <button
                 className={`tab ${activeTab === 'longterm' ? 'active' : ''}`}
@@ -297,9 +326,12 @@ function App({ onMultiViewClick }) {
                     </p>
                   </div>
                   <div className="coins-grid">
-                    {summary.coins_to_evaluate_long_term.map((coin, idx) => (
+                    {filterCoins(summary.coins_to_evaluate_long_term).map((coin, idx) => (
                       <CoinCard key={idx} coin={coin} />
                     ))}
+                    {filterCoins(summary.coins_to_evaluate_long_term).length === 0 && (
+                      <p className="no-results">No coins match your search.</p>
+                    )}
                   </div>
                 </div>
               )}
@@ -313,9 +345,12 @@ function App({ onMultiViewClick }) {
                     </p>
                   </div>
                   <div className="coins-grid">
-                    {summary.coins_to_trade_now_short_term.map((coin, idx) => (
+                    {filterCoins(summary.coins_to_trade_now_short_term).map((coin, idx) => (
                       <CoinCard key={idx} coin={coin} showTimeframe={false} />
                     ))}
+                    {filterCoins(summary.coins_to_trade_now_short_term).length === 0 && (
+                      <p className="no-results">No coins match your search.</p>
+                    )}
                   </div>
                 </div>
               )}
@@ -329,9 +364,12 @@ function App({ onMultiViewClick }) {
                     </p>
                   </div>
                   <div className="coins-grid">
-                    {summary.coins_to_avoid.map((coin, idx) => (
+                    {filterCoins(summary.coins_to_avoid).map((coin, idx) => (
                       <CoinCard key={idx} coin={coin} />
                     ))}
+                    {filterCoins(summary.coins_to_avoid).length === 0 && (
+                      <p className="no-results">No coins match your search.</p>
+                    )}
                   </div>
                 </div>
               )}

@@ -10,6 +10,7 @@ function MultiTimeframeDashboard({ onBackClick }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [selectedCoin, setSelectedCoin] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const timeframes = [
     { value: '15m', label: '15M' },
@@ -70,6 +71,15 @@ function MultiTimeframeDashboard({ onBackClick }) {
       // Sort by pct_from_ema50 - most above EMA first
       return (b.pct_from_ema50 || 0) - (a.pct_from_ema50 || 0)
     })
+  }
+
+  const filterCoins = (coins) => {
+    if (!searchQuery.trim()) return coins
+    const query = searchQuery.toLowerCase()
+    return coins.filter(coin => 
+      coin.symbol.toLowerCase().includes(query) || 
+      coin.name.toLowerCase().includes(query)
+    )
   }
 
   const getTrendColor = (pct) => {
@@ -175,8 +185,27 @@ function MultiTimeframeDashboard({ onBackClick }) {
               Showing {sortedCoins.length} coins ranked by their position relative to EMA50
             </p>
 
+            <div className="search-container">
+              <input
+                type="text"
+                placeholder="🔍 Search coins... (e.g., BTC, Bitcoin)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input"
+              />
+              {searchQuery && (
+                <button 
+                  className="search-clear"
+                  onClick={() => setSearchQuery('')}
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
             <div className="coins-grid-simple">
-              {sortedCoins.map((coin, idx) => (
+              {filterCoins(sortedCoins).map((coin, idx) => (
                 <div 
                   key={coin.symbol} 
                   className={`coin-card-simple ${getTrendColor(coin.pct_from_ema50)}`}
@@ -224,6 +253,9 @@ function MultiTimeframeDashboard({ onBackClick }) {
                   </div>
                 </div>
               ))}
+              {filterCoins(sortedCoins).length === 0 && (
+                <p className="no-results">No coins match your search.</p>
+              )}
             </div>
           </div>
         )}
