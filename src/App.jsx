@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import CoinDetailModal from './CoinDetailModal'
-import useLivePrices from './hooks/useLivePrices'  
+import useLivePrices from './hooks/UseLivePrices'  
 
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001'
