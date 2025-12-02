@@ -104,46 +104,6 @@ function CoinDetailModal({ symbol, onClose }) {
 
         <div className="modal-divider"></div>
 
-        {/* Data Coverage */}
-        <div className="section">
-          <div className="section-header">
-            <h3>📊 Data Coverage</h3>
-            <div className={`quality-badge quality-${overall_quality >= 80 ? 'excellent' : overall_quality >= 60 ? 'good' : 'limited'}`}>
-              Overall: {overall_quality}%
-            </div>
-          </div>
-          
-          <div className="coverage-list">
-            {data_coverage.map(tf => (
-              <div key={tf.timeframe} className="coverage-item">
-                <div className="coverage-header">
-                  <span className="tf-label">{tf.timeframe.toUpperCase()}</span>
-                  <span className={`quality-indicator quality-${tf.quality_color}`}>
-                    {tf.quality_label}
-                  </span>
-                </div>
-                <div className="coverage-stats">
-                  <span className="candle-count">{tf.candle_count.toLocaleString()} candles</span>
-                  <span className="time-span">({tf.years_of_data} years)</span>
-                </div>
-                <div className="coverage-bar">
-                  <div 
-                    className={`coverage-fill coverage-${tf.quality_color}`}
-                    style={{ width: `${tf.quality_score}%` }}
-                  ></div>
-                </div>
-                <div className="coverage-dates">
-                  <span>{formatDate(tf.earliest_candle)}</span>
-                  <span>→</span>
-                  <span>{formatDate(tf.latest_candle)}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="modal-divider"></div>
-
         {/* EMA Analysis */}
         <div className="section">
           <h3>📈 EMA Analysis (All Timeframes)</h3>

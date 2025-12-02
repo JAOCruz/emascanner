@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import CoinDetailModal from './CoinDetailModal'
+import useLivePrices from './hooks/useLivePrices'  
+
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001'
 
@@ -12,6 +14,32 @@ function App({ onMultiViewClick }) {
   const [error, setError] = useState(null)
   const [selectedCoin, setSelectedCoin] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+
+  const { prices, connected } = useLivePrices()
+
+  useEffect(() => {
+    if (!results?.strategic_summary || Object.keys(prices).length === 0) return
+    
+    setResults(prev => {
+      if (!prev?.strategic_summary) return prev
+      
+      const updatePrices = (coins) => 
+        coins.map(coin => ({
+          ...coin,
+          current_price: prices[coin.symbol] || coin.current_price
+        }))
+      
+      return {
+        ...prev,
+        strategic_summary: {
+          coins_to_evaluate_long_term: updatePrices(prev.strategic_summary.coins_to_evaluate_long_term),
+          coins_to_trade_now_short_term: updatePrices(prev.strategic_summary.coins_to_trade_now_short_term),
+          coins_to_avoid: updatePrices(prev.strategic_summary.coins_to_avoid)
+        }
+      }
+    })
+  }, [prices])
+
 
   // Auto-load on mount
   useEffect(() => {
@@ -164,6 +192,14 @@ function App({ onMultiViewClick }) {
     <div className="app">
       <div className="scanlines"></div>
       <div className="grid-bg"></div>
+      
+      {/* Live Price Indicator */}
+      {connected && (
+        <div className="live-indicator">
+          <span className="status-dot"></span>
+          <span>LIVE</span>
+        </div>
+      )}
       
       <header className="header">
         <div className="header-content">

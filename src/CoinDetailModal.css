@@ -81,12 +81,14 @@
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 24px;
+    padding-right: 50px; /* Add padding to prevent overlap with close button */
   }
   
   .coin-title {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    flex: 1; /* Take available space */
   }
   
   .coin-title h2 {
@@ -113,6 +115,9 @@
     font-size: 1.1rem;
     color: #00fff9;
     font-weight: 600;
+    white-space: nowrap; /* Prevent wrapping */
+    flex-shrink: 0; /* Don't shrink */
+    margin-left: 16px; /* Add spacing from title */
   }
   
   /* Price Section */
